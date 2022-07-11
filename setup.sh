@@ -4,6 +4,7 @@ sudo apt install gparted -y
 sudo apt install vim -y
 sudo apt install net-tools -y
 sudo apt install openssh-server -y
+sudo apt install cifs-utils
 
 #Install latest git
 sudo apt purge git -y
@@ -23,6 +24,9 @@ git config --global credential.helper manager-core
 git config --global credential.credentialStore plaintext
 git-credential-manager-core configure
 git config --global core.editor "vim"
+
+#Set up shared folder with host machine
+sudo mount.cifs //WIN-VQHN3T6VQSS/shared/ ~/shared -o=administrator
 
 cp .vimrc ~/
 cp -r .vim ~/
