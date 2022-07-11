@@ -11,7 +11,7 @@ let g:LanguageClient_serverCommands = {
     \ 'javascript.jsx': ['tcp://127.0.0.1:2089'],
     \ 'python': ['/usr/local/bin/pyls'],
     \ 'ruby': ['~/.rbenv/shims/solargraph', 'stdio'],
-    \ 'cpp': ['/usr/bin/clangd', '--enable-config', '--all-scopes-completion', '--background-index'],
+    \ 'cpp': ['/usr/bin/clangd-12', '--enable-config', '--all-scopes-completion', '--background-index'],
     \ }
 
 nnoremap C :call LanguageClient_contextMenu()<CR>

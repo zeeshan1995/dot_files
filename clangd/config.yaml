@@ -1,0 +1,6 @@
+CompileFlags:
+  Remove: [readability-identifier-naming, llvmlibc-callee-namespace, readability-function-cognitive-complexity]
+Diagnostics:
+  Remove: [readability-identifier-naming, llvmlibc-callee-namespace, readability-function-cognitive-complexity]
+  ClangTidy:
+    Remove: [readability-identifier-naming, llvmlibc-callee-namespace, readability-function-cognitive-complexity]

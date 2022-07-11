@@ -5,6 +5,9 @@ sudo apt install vim -y
 sudo apt install net-tools -y
 sudo apt install openssh-server -y
 sudo apt install cifs-utils
+sudo apt install fzf
+sudo apt install clangd-12 -y
+sudo apt install tmux -y
 
 #Install latest git
 sudo apt purge git -y
@@ -13,6 +16,9 @@ sudo apt update
 sudo apt install git -y
 sudo apt-get install -y libwebkit2gtk-4.0-37
 
+#install Latest Node
+curl -sL https://deb.nodesource.com/setup_17.x | sudo -E bash -
+sudo apt install nodejs -y
 
 # Install gcm
 # https://github.com/GitCredentialManager/git-credential-manager/releases
@@ -32,4 +38,6 @@ cp .vimrc ~/
 cp -r .vim ~/
 cp .bashrc ~/
 cp .tmux.conf ~/
-cp -r .tmux ~/
+
+mkdir -p ~/.config/
+cp -r clangd ~/.config/
