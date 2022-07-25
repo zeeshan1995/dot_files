@@ -32,7 +32,7 @@ git-credential-manager-core configure
 git config --global core.editor "vim"
 
 #Set up shared folder with host machine
-sudo mount.cifs //WIN-VQHN3T6VQSS/shared/ ~/shared -o=administrator
+sudo mount.cifs //WIN-VQHN3T6VQSS/shared/ ~/shared -o user=administrator
 
 cp .vimrc ~/
 cp -r .vim ~/
