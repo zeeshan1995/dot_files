@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import subprocess
+import time
 
 while(True):
     all_process = subprocess.check_output(['ps', '-ef']).decode('utf-8').split('\n')
@@ -8,4 +9,4 @@ while(True):
         #if r"/opt/microsoft/mdatp/sbin/sensecm" in p:
         if "sensecm" in p:
             print(x)
-            exit(0);
+            time.sleep(360)
