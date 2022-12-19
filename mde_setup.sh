@@ -8,4 +8,3 @@ sudo apt-get install gpg -y
 curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
 sudo apt-get install apt-transport-https -y
 sudo apt-get update -y
-sudo apt-get install -y libwebkit2gtk-4.0-37
