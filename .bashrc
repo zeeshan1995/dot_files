@@ -114,6 +114,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 alias gl='git log --pretty='\''format:%C(auto)%<|(13)%cr %C(cyan)%<|(30)%cn %C(auto)%h %d %s'\'''
 alias gs='git status'
 alias hvm18='ssh zeeshan@10.156.143.90'
+alias avm='ssh zakhter@20.9.137.19'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
