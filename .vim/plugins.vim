@@ -23,6 +23,9 @@ call plug#begin('~/.vim/plugged')
     " > https://github.com/tpope/vim-sensible/issues/137
     Plug 'tpope/vim-sensible'
 
+    "save vim/neovim sessions.
+    Plug 'tpope/vim-obsession'
+
     " Not sure if I need it
     " lets disable it until we know why we need it.
     " Plug 'junegunn/seoul256.vim'
@@ -100,6 +103,9 @@ call plug#begin('~/.vim/plugged')
     "
     Plug 'mg979/vim-visual-multi', {'branch': 'master'}
     "Plug 'fatih/vim-go',{'do': ':GoUpdateBinaries'}
+    "
+    "Python analyser https://github.com/davidhalter/jedi
+    Plug 'davidhalter/jedi-vim'
 
 call plug#end()
 
