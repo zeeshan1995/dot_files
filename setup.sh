@@ -40,6 +40,8 @@ git config --global core.editor "vim"
 #mkdir ~/shared
 #sudo mount.cifs //WIN-VQHN3T6VQSS/shared/ ~/shared -o user=administrator
 
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
 cp .vimrc ~/
 cp -r .vim ~/
 cp .bashrc ~/
