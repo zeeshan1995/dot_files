@@ -7,6 +7,7 @@ sudo apt install cifs-utils
 sudo apt install fzf
 sudo apt install ripgrep
 sudo apt install clangd-12 -y
+sudo pip install python-lsp-server
 sudo apt install tmux -y
 
 #Install latest git
