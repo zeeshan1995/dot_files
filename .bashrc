@@ -112,9 +112,13 @@ alias pimco='/opt/Citrix/ICAClient/wfica -icaroot /opt/Citrix/ICAClient ~/Deskto
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 alias gl='git log --pretty='\''format:%C(auto)%<|(13)%cr %C(cyan)%<|(30)%cn %C(auto)%h %d %s'\'''
+alias ga='git add -u'
 alias gs='git status'
+alias gd='git diff'
+alias gc='git commit -m'
+alias gp='git push origin `git rev-parse --symbolic-full-name --abbrev-ref HEAD`'
 alias hvm18='ssh zeeshan@10.156.143.90'
-alias avm='ssh zakhter@20.9.137.19'
+alias avm='ssh zakhter@20.57.136.25'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
