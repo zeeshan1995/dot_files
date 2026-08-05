@@ -1,141 +1,110 @@
-# ~/.bashrc: executed by bash(1) for non-login shells.
-# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
-# for examples
+# shellcheck shell=bash
 
-# If not running interactively, don't do anything
+# Interactive Bash configuration for Linux and macOS.
+
 case $- in
     *i*) ;;
-      *) return;;
+    *) return ;;
 esac
 
-# don't put duplicate lines or lines starting with space in the history.
-# See bash(1) for more options
-HISTCONTROL=ignoreboth
-
-# append to the history file, don't overwrite it
-shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
-
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
-shopt -s checkwinsize
-
-# If set, the pattern "**" used in a pathname expansion context will
-# match all files and zero or more directories and subdirectories.
-#shopt -s globstar
-
-# make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+HISTCONTROL=ignoreboth:erasedups
+HISTSIZE=50000
+HISTFILESIZE=100000
+shopt -s checkwinsize cmdhist histappend
+
+case "$(uname -s)" in
+    Darwin)
+        export STARSHIP_CONFIG="$HOME/Library/Application Support/starship/starship.toml"
+        export MISE_CONFIG_DIR="$HOME/Library/Application Support/mise"
+        export GH_CONFIG_DIR="$HOME/Library/Application Support/gh"
+        alias ls='ls -G'
+        alias alert='osascript -e '\''display notification "Command finished" with title "Terminal"'\'''
+        ;;
+    Linux)
+        export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
+        if command -v dircolors >/dev/null 2>&1; then
+            if [ -r "$HOME/.dircolors" ]; then
+                eval "$(dircolors -b "$HOME/.dircolors")"
+            else
+                eval "$(dircolors -b)"
+            fi
+            alias ls='ls --color=auto'
+            alias grep='grep --color=auto'
+            alias fgrep='fgrep --color=auto'
+            alias egrep='egrep --color=auto'
+        fi
+        alias alert='notify-send --urgency=low "Terminal" "Command finished"'
+        ;;
 esac
 
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
-force_color_prompt=yes
+if command -v fd >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+fi
 
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
+if command -v bat >/dev/null 2>&1; then
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+fi
+
+if [ -r "$HOME/.shell_aliases" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/.shell_aliases"
+fi
+
+if [ -r "$HOME/.bash_aliases" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/.bash_aliases"
+fi
+
+if command -v brew >/dev/null 2>&1; then
+    completion_file="$(brew --prefix)/etc/profile.d/bash_completion.sh"
+    # shellcheck source=/dev/null
+    [ -r "$completion_file" ] && . "$completion_file"
+
+    fzf_shell_dir="$(brew --prefix)/opt/fzf/shell"
+    # shellcheck source=/dev/null
+    [ -r "$fzf_shell_dir/completion.bash" ] && . "$fzf_shell_dir/completion.bash"
+    # shellcheck source=/dev/null
+    [ -r "$fzf_shell_dir/key-bindings.bash" ] && . "$fzf_shell_dir/key-bindings.bash"
+elif [ -r /usr/share/bash-completion/bash_completion ]; then
+    # shellcheck source=/dev/null
+    . /usr/share/bash-completion/bash_completion
+elif [ -r /etc/bash_completion ]; then
+    # shellcheck source=/dev/null
+    . /etc/bash_completion
+fi
+
+command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init bash)"
+    bind -r '"\e[0n"' 2>/dev/null || true
+fi
+
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+else
+    parse_git_branch() {
+        git branch --show-current 2>/dev/null | sed 's/^/ (/; s/$/)/'
+    }
+
+    if command -v tput >/dev/null 2>&1 && tput setaf 1 >/dev/null 2>&1; then
+        PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;90m\]$(parse_git_branch)\[\033[01;34m\]\n\$ \[\033[00m\]'
     else
-	color_prompt=
+        PS1='\u@\h:\w\$ '
     fi
 fi
 
-parse_git_branch() {
-    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
-}
-#export PS1="\u@\h \[\033[32m\]\w\[\033[33m\]\$(parse_git_branch)\[\033[00m\] $ "
-
-if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[01;90m\]$(parse_git_branch)\[\033[01;34m\]\n\$ \[\033[00m\]'
-else
-    PS1='${debian_chroot:+($debian_chroot)}\u:\w\$ '
-fi
-unset color_prompt force_color_prompt
-
-# If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
+    xterm* | rxvt* | screen* | tmux*)
+        PS1="\[\e]0;\u@\h: \w\a\]$PS1"
+        ;;
 esac
 
-# enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
-fi
-
-# colored GCC warnings and errors
-#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-# some more ls aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
-alias rm='rm -i'
-alias g++='g++ -std=c++11 -Wall -pedantic'
-alias g14='g++ -std=c++14 -Wall -pedantic'
-alias g17='g++ -std=c++17 -Wall -pedantic'
-alias a='./a.out'
-alias cd..='cd ..'
-alias jupyter='/opt/anaconda2/bin/jupyter-notebook'
-alias conda='/opt/anaconda2/bin/conda'
-alias kp="ps -ef | grep ICA | tr -s ' ' | cut -d' ' -f2 | xargs kill -9"
-#alias pimco='/opt/Citrix/ICAClient/wfica -icaroot /opt/Citrix/ICAClient ~/Desktop/launch.ica -span 2,3'" & rm -rf ~/Desktop/*.ica'
-alias pimco='/opt/Citrix/ICAClient/wfica -icaroot /opt/Citrix/ICAClient ~/Desktop/*.ica -span 2,3 '
-
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-alias gl='git log --pretty='\''format:%C(auto)%<|(13)%cr %C(cyan)%<|(30)%cn %C(auto)%h %d %s'\'''
-alias ga='git add -u'
-alias gs='git status'
-alias gd='git diff'
-alias gc='git commit -m'
-alias gp='git push origin `git rev-parse --symbolic-full-name --abbrev-ref HEAD`'
-alias hvm18='ssh zeeshan@10.156.143.90'
-alias avm='ssh zakhter@20.57.136.25'
-
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
+unset completion_file fzf_shell_dir

@@ -1,0 +1,22 @@
+{
+  "languageserver": {
+    "clangd": {
+      "command": "clangd",
+      "args": [
+        "--enable-config",
+        "--all-scopes-completion",
+        "--background-index"
+      ],
+      "filetypes": [
+        "c",
+        "cpp",
+        "objc",
+        "objcpp"
+      ],
+      "rootPatterns": [
+        "compile_commands.json",
+        ".git/"
+      ]
+    }
+  }
+}
