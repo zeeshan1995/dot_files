@@ -79,17 +79,29 @@ export PATH="$brew_prefix/bin:$PATH"
 clangd_target="$HOME/Library/Preferences/clangd"
 starship_target="$HOME/Library/Application Support/starship/starship.toml"
 vim_cache_dir="$HOME/Library/Caches/vim"
+vim_session_dir="$HOME/Library/Application Support/vim/sessions"
+tmux_resurrect_dir="$HOME/.local/share/tmux/resurrect"
+launch_agent_label="com.zeeshan.dotfiles.tmux"
+launch_agent="$HOME/Library/LaunchAgents/$launch_agent_label.plist"
+launch_log_dir="$HOME/Library/Logs/dotfiles"
 
 mkdir -p \
     "$(dirname "$clangd_target")" \
     "$(dirname "$starship_target")" \
+    "$(dirname "$launch_agent")" \
+    "$launch_log_dir" \
     "$HOME/.tmux/plugins" \
+    "$tmux_resurrect_dir" \
+    "$vim_session_dir" \
     "$vim_cache_dir/backup" \
     "$vim_cache_dir/swap" \
     "$vim_cache_dir/undo"
 
+chmod 700 "$tmux_resurrect_dir" "$vim_session_dir"
+
 backup_and_link "$DOTFILES_DIR/.bash_profile" "$HOME/.bash_profile"
 backup_and_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
+backup_and_link "$DOTFILES_DIR/.gitignore_global" "$HOME/.gitignore_global"
 backup_and_link "$DOTFILES_DIR/.shell_aliases" "$HOME/.shell_aliases"
 backup_and_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 backup_and_link "$DOTFILES_DIR/.vim" "$HOME/.vim"
@@ -106,6 +118,10 @@ fi
 if [ ! -d "$HOME/.tmux/plugins/tpm/.git" ]; then
     git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
 fi
+
+backup_and_link \
+    "$DOTFILES_DIR/tmux/vim_dotfiles.sh" \
+    "$HOME/.tmux/plugins/tmux-resurrect/strategies/vim_dotfiles.sh"
 
 if [ -d "$HOME/.vim/plugged/nerdtree/.git" ]; then
     git -C "$HOME/.vim/plugged/nerdtree" remote set-url origin https://github.com/preservim/nerdtree.git
@@ -142,5 +158,27 @@ done
 
 tmux start-server \; set-environment -g TMUX_PLUGIN_MANAGER_PATH "$HOME/.tmux/plugins"
 "$HOME/.tmux/plugins/tpm/bin/install_plugins"
+
+if tmux has-session 2>/dev/null; then
+    tmux source-file "$HOME/.tmux.conf"
+    "$HOME/.tmux/plugins/tmux-resurrect/scripts/save.sh" quiet
+fi
+
+start_script="$(printf '%s' "$DOTFILES_DIR/mac/start-tmux.sh" | sed 's/[&|]/\\&/g')"
+stdout_log="$(printf '%s' "$launch_log_dir/tmux.out.log" | sed 's/[&|]/\\&/g')"
+stderr_log="$(printf '%s' "$launch_log_dir/tmux.err.log" | sed 's/[&|]/\\&/g')"
+
+sed \
+    -e "s|__START_SCRIPT__|$start_script|g" \
+    -e "s|__STDOUT_LOG__|$stdout_log|g" \
+    -e "s|__STDERR_LOG__|$stderr_log|g" \
+    "$DOTFILES_DIR/mac/$launch_agent_label.plist.in" >"$launch_agent"
+
+plutil -lint "$launch_agent" >/dev/null
+
+if launchctl print "gui/$UID/$launch_agent_label" >/dev/null 2>&1; then
+    launchctl bootout "gui/$UID/$launch_agent_label"
+fi
+launchctl bootstrap "gui/$UID" "$launch_agent"
 
 echo "Dotfiles configured. Bash: $("$BREW" --prefix bash)/bin/bash; default shell unchanged."

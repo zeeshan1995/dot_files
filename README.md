@@ -37,6 +37,35 @@ replacing standard commands:
 - `just` for project commands
 - `shellcheck` and `shfmt` for shell scripts
 
+## Session persistence
+
+The macOS setup uses `tmux-resurrect` and `tmux-continuum`, the established
+dynamic snapshot solution for tmux:
+
+- sessions, windows, panes, ordering, layouts, focus, and working directories
+  are restored
+- pane scrollback is captured
+- Vim uses Obsession to continuously maintain private session files under
+  `~/Library/Application Support/vim/sessions`, restoring open files, tabs,
+  splits, folds, and the current directory
+- safe interactive programs such as Vim, Copilot CLI, LazyGit, and Yazi are
+  relaunched
+- snapshots are written every five minutes and whenever the macOS setup runs
+- a LaunchAgent starts tmux at login, which triggers automatic restoration
+
+Project-local `Session.vim` files are globally ignored by Git for compatibility,
+but the macOS setup does not create them. No new tmux or Vim key bindings are
+added.
+
+This is state reconstruction, not process checkpointing: arbitrary running
+jobs, in-memory application state, unsaved Vim buffer contents, and network
+connections cannot be resumed exactly after a reboot. Pane scrollback and Vim
+swap/undo files provide recovery context, but important edits and job state
+must still be saved by their applications.
+
+Snapshots can contain terminal output and are stored locally in a
+user-readable-only directory.
+
 The setup deliberately does not install or initialize:
 
 - Atuin, because its default history bindings conflict with the existing fzf

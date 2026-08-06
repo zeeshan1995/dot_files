@@ -14,6 +14,7 @@ source ~/.vim/plugin-settings/fzf.vim
 source ~/.vim/plugin-settings/coc.vim
 source ~/.vim/plugin-settings/lightline.vim
 source ~/.vim/plugin-settings/nerdtree.vim
+source ~/.vim/plugin-settings/persistence.vim
 source ~/.vim/plugin-settings/undotree.vim
 source ~/.vim/plugin-settings/vim-sneak.vim
 source ~/.vim/mappings.vim
