@@ -1,0 +1,9 @@
+[Unit]
+Description=Save tmux sessions with tmux-resurrect
+After=tmux.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecCondition=/usr/bin/tmux has-session
+ExecStart=%h/.tmux/plugins/tmux-resurrect/scripts/save.sh quiet

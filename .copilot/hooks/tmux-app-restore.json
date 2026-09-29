@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "\"$HOME/.local/bin/tmux-app-state\" copilot-hook",
+        "timeoutSec": 5
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "\"$HOME/.local/bin/tmux-app-state\" copilot-hook",
+        "timeoutSec": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "\"$HOME/.local/bin/tmux-app-state\" copilot-hook --end",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}

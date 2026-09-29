@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""Record live application identities in tmux-resurrect snapshots."""
+
+import argparse
+from dataclasses import dataclass
+import json
+import os
+from pathlib import Path
+import shlex
+import subprocess
+import sys
+import tempfile
+import uuid
+
+
+OPTION = "@reboot-app"
+
+
+@dataclass
+class Process:
+    pid: int
+    parent: int
+    group: int
+    terminal: int
+    foreground: int
+    started: int
+
+
+def process(pid):
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text()
+    except FileNotFoundError:
+        return None
+    fields = stat[stat.rfind(")") + 2:].split()
+    return Process(pid, int(fields[1]), int(fields[2]), int(fields[4]),
+                   int(fields[5]), int(fields[19]))
+
+
+def tmux(*args):
+    return subprocess.check_output(["tmux", *args], text=True).rstrip("\n")
+
+
+def descended_from(pid, ancestor):
+    while pid > 1:
+        if pid == ancestor:
+            return True
+        current = process(pid)
+        if current is None:
+            return False
+        pid = current.parent
+    return False
+
+
+def active_in_pane(owner, pane_pid):
+    pane = process(pane_pid)
+    return (
+        pane is not None and owner is not None
+        and owner.terminal != 0 and owner.terminal == pane.terminal
+        and owner.group == pane.foreground
+        and descended_from(owner.pid, pane_pid)
+    )
+
+
+def register(owner, state, ending=False):
+    pane_id = os.environ["TMUX_PANE"]
+    pane_pid = int(tmux("display-message", "-p", "-t", pane_id, "#{pane_pid}"))
+    if not active_in_pane(owner, pane_pid):
+        return
+    state.update(pid=owner.pid, started=owner.started)
+    if ending:
+        encoded = tmux("show-options", "-p", "-qv", "-t", pane_id, OPTION)
+        if encoded:
+            previous = json.loads(encoded)
+            if all(previous.get(key) == state[key] for key in ("session_id", "pid", "started")):
+                tmux("set-option", "-pu", "-t", pane_id, OPTION)
+    else:
+        tmux("set-option", "-p", "-t", pane_id, OPTION,
+             json.dumps(state, separators=(",", ":")))
+
+
+def copilot_hook(ending=False):
+    if not os.environ.get("TMUX") or not os.environ.get("TMUX_PANE"):
+        return
+    payload = json.load(sys.stdin)
+    session_id = str(uuid.UUID(payload["sessionId"]))
+    cwd = payload["cwd"]
+    if not isinstance(cwd, str) or not Path(cwd).is_absolute() or any(
+        char in cwd for char in "\t\r\n"
+    ):
+        raise ValueError("Copilot hook supplied an invalid working directory")
+
+    # Ignore background CLI instances launched by a tool, not by the pane's shell.
+    pid = os.getppid()
+    while pid > 1:
+        owner = process(pid)
+        if owner is None:
+            return
+        try:
+            executable = os.readlink(f"/proc/{pid}/exe").removesuffix(" (deleted)")
+        except FileNotFoundError:
+            return
+        if Path(executable).name == "copilot":
+            register(owner, {"kind": "copilot", "session_id": session_id, "cwd": cwd}, ending)
+            return
+        pid = owner.parent
+    raise ValueError("Copilot hook has no CLI ancestor")
+
+
+def register_vim(pid, session_file, readonly):
+    if not os.environ.get("TMUX") or not os.environ.get("TMUX_PANE"):
+        return
+    if not descended_from(os.getpid(), pid):
+        raise ValueError("Vim registration did not originate from that editor")
+    path = Path(session_file).resolve(strict=True)
+    if not path.is_relative_to((Path.home() / ".local/state/tmux/vim").resolve()):
+        raise ValueError("Vim session file is outside the private session directory")
+    register(process(pid), {"kind": "vim", "file": str(path), "readonly": readonly})
+
+
+def save_layout(path):
+    pane_format = "\t".join((
+        "#{session_name}", "#{window_index}", "#{pane_index}",
+        "#{pane_pid}", f"#{{{OPTION}}}",
+    ))
+    states = {}
+    for line in tmux("list-panes", "-a", "-F", pane_format).splitlines():
+        session, window, pane, pid, encoded = line.split("\t", 4)
+        if not encoded:
+            continue
+        state = json.loads(encoded)
+        owner = process(state["pid"])
+        if owner is None or owner.started != state["started"]:
+            continue
+        if active_in_pane(owner, int(pid)):
+            states[(session, window, pane)] = state
+
+    lines = []
+    for line in path.read_text().splitlines():
+        fields = line.split("\t")
+        if fields[0] == "pane":
+            if len(fields) != 11:
+                raise ValueError("Unsupported tmux-resurrect pane record")
+            state = states.get((fields[1], fields[2], fields[5]))
+            if state:
+                if state["kind"] == "copilot":
+                    session_id = str(uuid.UUID(state["session_id"]))
+                    command = ["copilot", "--resume", session_id]
+                    fields[7] = ":" + state["cwd"]
+                elif state["kind"] == "vim":
+                    if not Path(state["file"]).is_file():
+                        raise ValueError("A live Vim editor's session file is missing")
+                    command = ["vim"]
+                    if state["readonly"]:
+                        command.append("-R")
+                    command += ["-S", state["file"]]
+                else:
+                    raise ValueError("Unrecognized application registration")
+                fields[9] = state["kind"]
+                fields[10] = ":" + shlex.join(command)
+        lines.append("\t".join(fields))
+
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as file:
+            temporary = Path(file.name)
+            file.write("\n".join(lines) + "\n")
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary, path)
+        # Same-second saves reuse a filename; Resurrect's deduplication would
+        # otherwise delete the file already targeted by "last".
+        last = path.parent / "last"
+        if last.is_symlink() and last.resolve() == path.resolve():
+            preserved = path.with_name(f"{path.stem}-{uuid.uuid4().hex}{path.suffix}")
+            os.link(path, preserved)
+            temporary_link = path.parent / f".last-{uuid.uuid4().hex}"
+            try:
+                temporary_link.symlink_to(preserved.name)
+                temporary_link.replace(last)
+            finally:
+                temporary_link.unlink(missing_ok=True)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    copilot = commands.add_parser("copilot-hook")
+    copilot.add_argument("--end", action="store_true")
+    vim = commands.add_parser("vim")
+    vim.add_argument("pid", type=int)
+    vim.add_argument("session_file")
+    vim.add_argument("--readonly", action="store_true")
+    save = commands.add_parser("save")
+    save.add_argument("snapshot", type=Path)
+    args = parser.parse_args()
+    if args.command == "copilot-hook":
+        copilot_hook(args.end)
+    elif args.command == "vim":
+        register_vim(args.pid, args.session_file, args.readonly)
+    else:
+        save_layout(args.snapshot)
+
+
+if __name__ == "__main__":
+    os.umask(0o077)
+    try:
+        main()
+    except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
+        print(f"tmux application restore: {error}", file=sys.stderr)
+        sys.exit(1)

@@ -1,0 +1,15 @@
+[Unit]
+Description=tmux default session with automatic restoration
+Documentation=man:tmux(1)
+
+[Service]
+Type=forking
+UMask=0077
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/tmux -f %h/.tmux.conf new-session -d
+ExecStop=%h/.tmux/plugins/tmux-resurrect/scripts/save.sh quiet
+ExecStop=/usr/bin/tmux kill-server
+KillMode=control-group
+
+[Install]
+WantedBy=default.target
