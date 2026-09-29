@@ -75,12 +75,14 @@ clone_plugin() {
     fi
 }
 
-for file in .vimrc .bashrc .tmux.conf; do
+for file in .vimrc .bashrc .shell_aliases .tmux.conf; do
     install_file "$repo_dir/$file" "$HOME/$file"
 done
 while IFS= read -r -d '' file; do
     install_file "$file" "$HOME/${file#"$repo_dir/"}"
-done < <(find "$repo_dir/.vim" -type f ! -name .netrwhist -print0)
+done < <(find "$repo_dir/.vim" \
+    \( -path "$repo_dir/.vim/plugged" -o -path "$repo_dir/.vim/undodir" \) -prune -o \
+    -type f ! -name .netrwhist -print0)
 install_file "$repo_dir/.local/bin/tmux-app-state" "$HOME/.local/bin/tmux-app-state" 755
 install_file "$repo_dir/.copilot/hooks/tmux-app-restore.json" \
     "${COPILOT_HOME:-$HOME/.copilot}/hooks/tmux-app-restore.json"
@@ -89,6 +91,7 @@ for unit in tmux.service tmux-save.service tmux-save.timer; do
         "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$unit"
 done
 install -d -m 700 "$HOME/.local/share/tmux/resurrect" "$HOME/.local/state/tmux/vim"
+install -d -m 700 "$HOME/.cache/vim/backup" "$HOME/.cache/vim/swap" "$HOME/.cache/vim/undo"
 install -d "$HOME/.tmux/plugins"
 for plugin in tpm tmux-resurrect tmux-continuum; do
     clone_plugin "$plugin"
@@ -98,6 +101,13 @@ for entry in tpm/tpm tmux-resurrect/resurrect.tmux tmux-continuum/continuum.tmux
 done
 
 printf 'Installing configured Vim plugins...\n'
+if [[ -d "$HOME/.vim/plugged/nerdtree/.git" ]]; then
+    case "$(git -C "$HOME/.vim/plugged/nerdtree" remote get-url origin)" in
+        https://github.com/scrooloose/nerdtree|https://github.com/scrooloose/nerdtree.git)
+            git -C "$HOME/.vim/plugged/nerdtree" remote set-url origin https://github.com/preservim/nerdtree.git
+            ;;
+    esac
+fi
 vim -Nu NONE -n -es -S "$repo_dir/scripts/install-vim-plugins.vim"
 
 # Lingering starts the user manager at boot, without requiring an SSH login first.

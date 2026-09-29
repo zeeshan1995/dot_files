@@ -1,4 +1,4 @@
-if exists('g:loaded_tmux_session')
+if !has('unix') || has('macunix') || exists('g:loaded_tmux_session')
   finish
 endif
 let g:loaded_tmux_session = 1
@@ -38,7 +38,7 @@ function! s:Start() abort
   let s:timer = timer_start(30000, function('s:Save'), {'repeat': -1})
 endfunction
 
-augroup tmux_session
+augroup dotfiles_linux_tmux_session
   autocmd!
   autocmd VimEnter * call s:Start()
 augroup END

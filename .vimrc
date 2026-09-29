@@ -1,37 +1,35 @@
+syntax enable
+filetype plugin indent on
 
-syntax on
-filetype plugin on
+let mapleader = ' '
 
-let mapleader=' '
+if has('macunix')
+    let g:coc_data_home = expand('~/Library/Application Support/coc')
+endif
 
 source ~/.vim/set-cmds.vim
-
 source ~/.vim/plugins.vim
 
 source ~/.vim/plugin-settings/fzf.vim
-source ~/.vim/plugin-settings/language-client.vim
+source ~/.vim/plugin-settings/coc.vim
 source ~/.vim/plugin-settings/lightline.vim
 source ~/.vim/plugin-settings/nerdtree.vim
+source ~/.vim/plugin-settings/persistence.vim
 source ~/.vim/plugin-settings/undotree.vim
 source ~/.vim/plugin-settings/vim-sneak.vim
-
 source ~/.vim/mappings.vim
 
-let g:rg_command = 'rg --vimgrep'
-colorscheme molokai
+let g:rg_command = 'rg --vimgrep --smart-case'
 
-" have vim jump to the last position when reopening a file
-au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+if !empty(globpath(&runtimepath, 'colors/molokai.vim'))
+    colorscheme molokai
+endif
 
-"http://stackoverflow.com/questions/4206360/vim-how-to-change-font-color-of-current-line-number
 highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=233
 
-" format json file 
-" https://stackoverflow.com/questions/26214156/how-to-auto-format-json-on-save-in-vim
-com! FormatJson %!python -m json.tool
+command! FormatJson %!python3 -m json.tool
 
-" https://github.com/vim/vim/issues/704
-"autocmd VimEnter * set autochdir
-
-"autocmd StdinReadPre * let s:std_in=1
-"autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+augroup dotfiles
+    autocmd!
+    autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | execute "normal! g'\"" | endif
+augroup END

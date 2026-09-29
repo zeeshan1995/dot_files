@@ -1,0 +1,29 @@
+add_newline = false
+format = "$username$hostname$directory$git_branch$git_status$cmd_duration$line_break$character"
+
+[username]
+show_always = true
+format = "[$user](bold green)"
+
+[hostname]
+ssh_only = false
+format = "[@$hostname](bold green):"
+
+[directory]
+truncation_length = 4
+truncate_to_repo = false
+style = "bold blue"
+
+[git_branch]
+format = " [$branch](bold bright-black)"
+
+[git_status]
+format = "[$all_status$ahead_behind](bold yellow)"
+
+[cmd_duration]
+min_time = 2000
+format = " [$duration](yellow)"
+
+[character]
+success_symbol = '[\$](bold blue) '
+error_symbol = '[\$](bold red) '

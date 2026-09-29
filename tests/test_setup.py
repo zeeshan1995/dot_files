@@ -25,6 +25,14 @@ if name == "sudo":
 elif name in ("apt-get", "loginctl", "vim"):
     pass
 elif name == "git":
+    if args[0] == "-C":
+        origin = pathlib.Path(args[1]) / ".git/origin"
+        if args[2:] == ["remote", "get-url", "origin"]:
+            print(origin.read_text().strip())
+        else:
+            assert args[2:5] == ["remote", "set-url", "origin"], args
+            origin.write_text(args[5])
+        sys.exit(0)
     assert args[0] == "clone", args
     destination = pathlib.Path(args[-1])
     (destination / ".git").mkdir(parents=True)
@@ -90,7 +98,8 @@ class SetupTests(unittest.TestCase):
     def test_fresh_install_from_another_directory(self):
         self.setup()
         for relative in (
-            ".tmux.conf", ".vimrc", ".bashrc", ".vim/plugin/tmux-session.vim",
+            ".tmux.conf", ".vimrc", ".bashrc", ".shell_aliases", ".vim/plugin/tmux-session.vim",
+            ".vim/plugin-settings/persistence.vim",
             ".local/bin/tmux-app-state", ".copilot/hooks/tmux-app-restore.json",
             ".config/systemd/user/tmux.service", ".config/systemd/user/tmux-save.timer",
             ".config/systemd/user/tmux-save.service",
@@ -98,6 +107,8 @@ class SetupTests(unittest.TestCase):
             self.assertEqual((self.home / relative).read_bytes(), (ROOT / relative).read_bytes())
         self.assertEqual((self.home / ".local/bin/tmux-app-state").stat().st_mode & 0o777, 0o755)
         self.assertEqual((self.home / ".local/state/tmux/vim").stat().st_mode & 0o777, 0o700)
+        for directory in ("backup", "swap", "undo"):
+            self.assertTrue((self.home / ".cache/vim" / directory).is_dir())
         self.assertFalse((self.home / ".vim/.netrwhist").exists())
         calls = self.calls()
         self.assertEqual(len([call for call in calls if call[0] == "git"]), 3)
@@ -151,6 +162,17 @@ class SetupTests(unittest.TestCase):
         self.setup("--skip-packages")
         self.assertTrue((custom / "hooks/tmux-app-restore.json").is_file())
         self.assertFalse((self.home / ".copilot/hooks/tmux-app-restore.json").exists())
+
+    def test_old_nerdtree_remote_is_migrated_before_plugin_install(self):
+        origin = self.home / ".vim/plugged/nerdtree/.git/origin"
+        origin.parent.mkdir(parents=True)
+        origin.write_text("https://github.com/scrooloose/nerdtree.git")
+        self.setup("--skip-packages")
+        self.assertEqual(origin.read_text(), "https://github.com/preservim/nerdtree.git")
+        calls = self.calls()
+        migration = next(i for i, call in enumerate(calls) if "set-url" in call)
+        installation = next(i for i, call in enumerate(calls) if call[0] == "vim")
+        self.assertLess(migration, installation)
 
     def test_conflicting_xdg_tmux_config_is_not_silently_ignored(self):
         config = self.home / ".config/tmux/tmux.conf"

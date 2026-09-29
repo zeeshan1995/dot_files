@@ -1,0 +1,16 @@
+[core]
+    pager = delta
+    excludesFile = ~/.gitignore_global
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    line-numbers = true
+    navigate = true
+
+[diff]
+    colorMoved = default
+
+[merge]
+    conflictStyle = zdiff3
