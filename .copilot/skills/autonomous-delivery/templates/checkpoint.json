@@ -1,0 +1,59 @@
+{
+  "schema_version": 3,
+  "run_id": null,
+  "status": "ready",
+  "phase": "brainstorm",
+  "created_at": null,
+  "updated_at": null,
+  "coordinator_session_id": null,
+  "coordinator_history": [],
+  "repository": {
+    "project_id": null,
+    "identity": null,
+    "worktree_path": null,
+    "branch": null,
+    "base_commit": null
+  },
+  "contract": {
+    "objective": null,
+    "change_kind": null,
+    "deliverables": [],
+    "exclusions": [],
+    "permitted_actions": [],
+    "features": [],
+    "acceptance_criteria": [],
+    "verification_matrix": [],
+    "deadline_at": null,
+    "requested_usage_limit": null,
+    "usage_limit_enforced_by": null,
+    "requested_worker_limit": null
+  },
+  "execution": {
+    "host": null,
+    "capability_limitations": [],
+    "automation_type": null,
+    "automation_id": null,
+    "automation_enabled": false,
+    "verifier": null,
+    "helpers": []
+  },
+  "phase_gates": [
+    {"id": "brainstorm", "depends_on": [], "status": "pending", "artifact": null, "reviews": []},
+    {"id": "requirements", "depends_on": ["brainstorm"], "status": "pending", "artifact": null, "reviews": []},
+    {"id": "architecture", "depends_on": ["requirements"], "status": "pending", "artifact": null, "reviews": []},
+    {"id": "design", "depends_on": ["architecture"], "status": "pending", "artifact": null, "reviews": []},
+    {"id": "implementation_plan", "depends_on": ["design"], "status": "pending", "artifact": null, "reviews": []},
+    {"id": "implementation", "depends_on": ["implementation_plan"], "status": "pending", "artifact": null, "reviews": []},
+    {"id": "verification", "depends_on": ["implementation"], "status": "pending", "artifact": null, "reviews": []}
+  ],
+  "tasks": [],
+  "milestones": [],
+  "workers": [],
+  "feature_results": [],
+  "source_snapshot": null,
+  "verification_evidence": [],
+  "failure_attempts": [],
+  "blockers": [],
+  "artifact_paths": [],
+  "next_action": null
+}

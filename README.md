@@ -1,6 +1,18 @@
 # Dotfiles
 
-Bash, zsh, Vim, tmux, clangd, and Git configuration for Linux and macOS.
+Bash, zsh, Vim, tmux, clangd, Git, and personal Copilot configuration for Linux
+and macOS.
+
+## Personal Copilot agentic setup
+
+The maintained instructions, specialist agents, four personal skills, templates,
+and checkpoint validator live in [`.copilot/`](.copilot/README.md). Follow that
+directory's separate, opt-in installation instructions; neither platform setup
+script installs the agentic profiles or starts their monitoring.
+
+This is portable configuration, not saved conversations or a running supervisor.
+The existing `.copilot/hooks/` remains the separate Linux tmux restoration hook
+described below.
 
 ## Install on Linux
 
@@ -157,6 +169,7 @@ The macOS setup deliberately does not install or initialize:
 
 ```bash
 python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s .copilot/skills/autonomous-delivery/scripts -p 'test_*.py' -v
 bash -n setup.sh mac/setup.sh mac/start-tmux.sh tmux/vim_dotfiles.sh
 shellcheck setup.sh mac/setup.sh mac/start-tmux.sh tmux/vim_dotfiles.sh
 ```

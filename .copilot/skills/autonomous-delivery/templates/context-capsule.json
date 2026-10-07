@@ -1,0 +1,17 @@
+{
+  "run_id": null,
+  "coordinator_session_id": null,
+  "checkpoint": {
+    "path": "checkpoint.json",
+    "sha256": null
+  },
+  "updated_at": null,
+  "objective": null,
+  "phase": null,
+  "non_negotiable_constraints": [],
+  "pending_decisions": [],
+  "open_blocker_ids": [],
+  "active_worker_ids": [],
+  "relevant_artifact_refs": [],
+  "next_action": null
+}

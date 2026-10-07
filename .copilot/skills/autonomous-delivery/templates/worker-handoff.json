@@ -1,0 +1,17 @@
+{
+  "run_id": null,
+  "work_item_id": null,
+  "agent_id": null,
+  "role": null,
+  "status": "blocked",
+  "summary": null,
+  "criterion_ids": [],
+  "artifact_refs": [],
+  "pending_artifact_paths": [],
+  "source_reference": null,
+  "check_results": [],
+  "blocking_finding_ids": [],
+  "blocker_index_ref": null,
+  "blocking_finding_count": 0,
+  "next_action": null
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "stage_id": null,
+  "cycle": 1,
+  "subject_sha256": null,
+  "prerequisite_sha256": {},
+  "proposer": {
+    "initial_agent_id": null,
+    "initial_report": null,
+    "rebuttal_agent_id": null,
+    "rebuttal_report": null
+  },
+  "challenger": {
+    "initial_agent_id": null,
+    "initial_report": null,
+    "rebuttal_agent_id": null,
+    "rebuttal_report": null
+  },
+  "findings": [],
+  "decision": {
+    "verdict": "pending",
+    "coordinator_session_id": null,
+    "reason": null
+  }
+}
